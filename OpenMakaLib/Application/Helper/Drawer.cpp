@@ -9,30 +9,30 @@
 using namespace std;
 using namespace om;
 
-Drawer::Drawer(void) {
+Drawer::Drawer() {
     if (Controller::MODE_DEBUG) {
         cout << "Creating Drawer instance.." << endl;
     }
 }
 
-Drawer::~Drawer(void) {
+Drawer::~Drawer() {
     if (Controller::MODE_DEBUG) {
         cout << "Deleting Drawer instance.." << endl;
     }
 }
 
-void Drawer::drawContour(cv::Mat& image, vector<cv::Point2f> points2d, cv::Scalar color, int thickness, int lineType, int shift)
+void Drawer::drawContour(Mat& image, vector<Point2f> points2d, Scalar color, int thickness, int lineType, int shift)
 {
 	// for all points
 	for (size_t i = 0; i < points2d.size(); i++)
 	{
 		// rescale point a coordinates
-		cv::Point2f a;
+		Point2f a;
 		a.x = static_cast<int>(points2d[i].x + 0.5);
 		a.y = static_cast<int>(points2d[i].y + 0.5);
 
 		// rescale point b coordinates
-		cv::Point2f b;
+		Point2f b;
 		b.x = static_cast<int>(points2d[(i + 1) % points2d.size()].x + 0.5);
 		b.y = static_cast<int>(points2d[(i + 1) % points2d.size()].y + 0.5);
 
@@ -41,19 +41,19 @@ void Drawer::drawContour(cv::Mat& image, vector<cv::Point2f> points2d, cv::Scala
 	}
 }
 
-void Drawer::drawContourWithRescale(cv::Mat &image, vector<cv::Point2f> points2d, cv::Scalar color, int thickness,
+void Drawer::drawContourWithRescale(Mat &image, vector<Point2f> points2d, Scalar color, int thickness,
                          int lineType, int shift) {
 
     // for all points
     for (size_t i = 0; i < points2d.size(); i++) {
 
         // rescale point a coordinates
-        cv::Point2f a;
+        Point2f a;
         a.x = static_cast<int>(points2d[i].x * SceneFrame::IMAGE_SCALE + 0.5);
         a.y = static_cast<int>(points2d[i].y * SceneFrame::IMAGE_SCALE + 0.5);
 
         // resale point b coordinates
-        cv::Point2f b;
+        Point2f b;
         b.x = static_cast<int>(points2d[(i + 1) % points2d.size()].x * SceneFrame::IMAGE_SCALE + 0.5);
         b.y = static_cast<int>(points2d[(i + 1) % points2d.size()].y * SceneFrame::IMAGE_SCALE + 0.5);
 
@@ -62,7 +62,7 @@ void Drawer::drawContourWithRescale(cv::Mat &image, vector<cv::Point2f> points2d
     }
 }
 
-void Drawer::drawKeypoints(cv::Mat &image, vector<cv::KeyPoint> keyPoints, cv::Scalar color) {
+void Drawer::drawKeypoints(Mat &image, vector<KeyPoint> keyPoints, Scalar color) {
 
     // for all keypoints
     for (unsigned int i = 0; i < keyPoints.size(); i++) {
@@ -72,11 +72,11 @@ void Drawer::drawKeypoints(cv::Mat &image, vector<cv::KeyPoint> keyPoints, cv::S
         int y = static_cast<int>((keyPoints[i].pt.y * SceneFrame::IMAGE_SCALE) + 0.5);
 
         // draw circles
-        cv::circle(image, cv::Point(x, y), 10, cv::Scalar(255, 0, 0, 255));
+        circle(image, Point(x, y), 10, Scalar(255, 0, 0, 255));
     }
 }
 
-void Drawer::drawKeypointsWithResponse(cv::Mat &image, vector<cv::KeyPoint> keyPoints, cv::Scalar color) {
+void Drawer::drawKeypointsWithResponse(Mat &image, vector<KeyPoint> keyPoints, Scalar color) {
 
     // for all keypoints
     for (unsigned int i = 0; i < keyPoints.size(); i++) {
@@ -86,14 +86,14 @@ void Drawer::drawKeypointsWithResponse(cv::Mat &image, vector<cv::KeyPoint> keyP
 	    auto y = static_cast<int>((keyPoints[i].pt.y * SceneFrame::IMAGE_SCALE) + 0.5);
 
         // draw circles
-        circle(image, cv::Point(x, y), static_cast<int>(keyPoints[i].response + 0.5), cv::Scalar(255, 0, 0, 255));
+        circle(image, Point(x, y), static_cast<int>(keyPoints[i].response + 0.5), Scalar(255, 0, 0, 255));
     }
 }
 
-cv::Mat Drawer::drawMatchesWindow(cv::Mat query, cv::Mat pattern, const vector<cv::KeyPoint> &queryKp,
-                                  const vector<cv::KeyPoint> &trainKp, vector<cv::DMatch> matches,
+Mat Drawer::drawMatchesWindow(Mat query, Mat pattern, const vector<KeyPoint> &queryKp,
+                                  const vector<KeyPoint> &trainKp, vector<DMatch> matches,
                                   int maxMatchesDrawn) {
-    cv::Mat outImg;
+    Mat outImg;
 
     if (matches.size() > maxMatchesDrawn) {
         matches.resize(maxMatchesDrawn);
@@ -107,19 +107,19 @@ cv::Mat Drawer::drawMatchesWindow(cv::Mat query, cv::Mat pattern, const vector<c
                     trainKp,
                     matches,
                     outImg,
-                    cv::Scalar(0, 200, 0, 255),
-                    cv::Scalar::all(-1),
+                    Scalar(0, 200, 0, 255),
+                    Scalar::all(-1),
                     vector<char>(),
-                    cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
+                    DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
             );
 
     return outImg;
 }
 
-cv::Mat Drawer::drawKeypointsWindow(cv::Mat query, cv::Mat pattern, const vector<cv::KeyPoint> &queryKp,
-                                    const vector<cv::KeyPoint> &trainKp, vector<cv::DMatch> matches,
+Mat Drawer::drawKeypointsWindow(Mat query, Mat pattern, const vector<KeyPoint> &queryKp,
+                                    const vector<KeyPoint> &trainKp, vector<DMatch> matches,
                                     int maxMatchesDrawn) {
-    cv::Mat outImg;
+    Mat outImg;
 
     if (matches.size() > maxMatchesDrawn) {
         matches.resize(maxMatchesDrawn);
@@ -133,10 +133,10 @@ cv::Mat Drawer::drawKeypointsWindow(cv::Mat query, cv::Mat pattern, const vector
                     trainKp,
                     matches,
                     outImg,
-                    cv::Scalar(0, 200, 0, 255),
-                    cv::Scalar::all(-1),
+                    Scalar(0, 200, 0, 255),
+                    Scalar::all(-1),
                     vector<char>(),
-                    cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
+                    DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
             );
 
     return outImg;

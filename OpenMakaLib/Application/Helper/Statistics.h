@@ -1,35 +1,35 @@
 #ifndef OPENMAKAENGINE_STATISTICS_H
 #define OPENMAKAENGINE_STATISTICS_H
 
-#include <iostream>
 #include <map>
 
-namespace om {
+using namespace std;
 
-    class Statistics {
+namespace om
+{
+	class Statistics
+	{
+	public:
 
-    private:
+		Statistics();
 
-        std::map<std::string, std::string> stats;
-        bool wroteHeader;
+		virtual ~Statistics();
 
-        static const std::string values[];
+		void add(string key, string value);
 
-    public:
+		void write(string filename);
 
-        Statistics(void);
+		void reset();
 
-        virtual ~Statistics(void);
+		void setDefaults();
 
-        void add(std::string key, std::string value);
+	private:
 
-        void write(std::string filename);
+		map<string, string> stats;
+		bool wroteHeader;
 
-        void reset();
-
-        void setDefaults();
-    };
-
-};
+		static const string values[];
+	};
+}
 
 #endif

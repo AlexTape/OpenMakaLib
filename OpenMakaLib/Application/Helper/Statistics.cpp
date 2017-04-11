@@ -3,13 +3,15 @@
 #define OPENMAKAENGINE_STATISTICS_CPP
 
 #include <fstream>
+#include <iostream>
+
 #include "Statistics.h"
 #include "../Controller.h"
 
 using namespace std;
 using namespace om;
 
-const std::string Statistics::values[26] = {
+const string Statistics::values[26] = {
 
 		"ImageName",
 
@@ -51,7 +53,7 @@ const std::string Statistics::values[26] = {
 
 };
 
-Statistics::Statistics(void) {
+Statistics::Statistics() {
     if (Controller::MODE_DEBUG) {
         cout << "Creating Statistics instance.." << endl;
     }
@@ -61,7 +63,8 @@ Statistics::Statistics(void) {
 
 }
 
-Statistics::~Statistics(void) {
+Statistics::~Statistics()
+{
 }
 
 void Statistics::add(string key, string value) {
@@ -111,7 +114,7 @@ void Statistics::write(string filename) {
     }
 
     // print linefeed
-    file << std::endl;
+    file << endl;
 
     // close file again
     file.close();

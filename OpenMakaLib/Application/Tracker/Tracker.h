@@ -7,53 +7,54 @@
 
 #include <opencv2/core/core.hpp>
 
-namespace om {
+using namespace cv;
 
-    class Tracker {
+namespace om
+{
+	class Tracker
+	{
+	public:
 
-    private:
+		virtual ~Tracker();
 
-        Tracker(void);
+		Mat lastImage;
+		vector<Point2f> corners;
+		vector<Point2f> objectPosition;
+		vector<unsigned char> vstatus;
 
-        static Tracker *inst_;
+		static int MAX_CORNERS;
+		static double QUALITY_LEVEL;
+		static double MINIMUM_DISTANCE;
 
-    public:
+		Mat homography;
 
-        virtual ~Tracker(void);
+		static Mat createAreaMask(Size imageSize, vector<Point2f>& points);
 
-        cv::Mat lastImage;
-        std::vector<cv::Point2f> corners;
-        std::vector<cv::Point2f> objectPosition;
-        std::vector<unsigned char> vstatus;
+		static vector<Point2f> calcAffineTransformation(vector<Point2f>& pointVector,
+		                                                Mat& transformation);
 
-        static int MAX_CORNERS;
-        static double QUALITY_LEVEL;
-        static double MINIMUM_DISTANCE;
+		static bool isObjectInsideImage(Size imageSize, vector<Point2f>& points);
 
-        cv::Mat homography;
+		static bool isRectangle(vector<Point2f>& rectanglePoints);
 
-        cv::Mat createAreaMask(cv::Size imageSize, std::vector<cv::Point2f> &points);
+		static int isInsideArea(vector<Point2f>& points, vector<Point2f>& cornerPoints,
+		                        vector<unsigned char>& status);
 
-        std::vector<cv::Point2f> calcAffineTransformation(std::vector<cv::Point2f> &pointVector,
-                                                          cv::Mat &transformation);
+		static Mat getLastDirection(vector<Point2f>& pointVector);
 
-        bool isObjectInsideImage(cv::Size imageSize, std::vector<cv::Point2f> &points);
+		void initialize(const Mat& frame,
+		                vector<Point2f>& actualObjectPosition);
 
-        bool isRectangle(std::vector<cv::Point2f> &rectanglePoints);
+		bool process(const Mat& sceneImage);
 
-        int isInsideArea(std::vector<cv::Point2f> &points, std::vector<cv::Point2f> &cornerPoints,
-                         std::vector<unsigned char> &status);
+		static Tracker* getInstance();
 
-        cv::Mat getLastDirection(std::vector<cv::Point2f> &pointVector);
+	private:
 
-        void initialize(const cv::Mat &frame,
-                        std::vector<cv::Point2f> &actualObjectPosition);
+		Tracker();
 
-        bool process(const cv::Mat &sceneImage);
-
-        static Tracker *getInstance();
-    };
-
-};
+		static Tracker* inst_;
+	};
+}
 
 #endif

@@ -3,25 +3,24 @@
 
 #include <time.h>
 
-namespace om {
+namespace om
+{
+	class Timer
+	{
+	public:
 
-    class Timer {
+		Timer();
 
-    private:
+		virtual ~Timer();
 
-        clock_t time;
+		double getMillis() const;
 
-    public:
+		void restart();
 
-        Timer(void);
+	private:
 
-        virtual ~Timer(void);
-
-        double getMillis();
-
-        void restart();
-    };
-
-};
+		clock_t time;
+	};
+}
 
 #endif //OPENMAKAENGINE_TIMER_H

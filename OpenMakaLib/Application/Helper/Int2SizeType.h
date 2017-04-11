@@ -4,7 +4,7 @@
 class Int2SizeType
 {
 public:
-	Int2SizeType(int& _v) : v(_v)
+	explicit Int2SizeType(int& _v) : v(_v)
 	{
 	}
 
@@ -17,7 +17,7 @@ public:
 	{
 		_ASSERT(v >= 0);
 		if (v < 0)
-			throw std::runtime_error("int out of range for size_t");
+			throw runtime_error("int out of range for size_t");
 		return static_cast<size_t>(v);
 	}
 

@@ -24,7 +24,9 @@
 #define fpu_error(x) (isinf(x) || isnan(x))
 
 using namespace std;
+using namespace cv;
 using namespace om;
+
 
 // init static members
 Analyzer *Analyzer::inst_ = nullptr;
@@ -37,7 +39,7 @@ float Analyzer::NN_DISTANCE_RATIO;
 int Analyzer::K_GROUPS;
 double Analyzer::RANSAC_REPROJECTION_THRESHOLD;
 
-Analyzer::Analyzer(void): distance(0), IS_BRUTEFORCE_MATCHER(false)
+Analyzer::Analyzer(): distance(0), IS_BRUTEFORCE_MATCHER(false)
 {
 	if (Controller::MODE_DEBUG)
 	{
@@ -45,20 +47,20 @@ Analyzer::Analyzer(void): distance(0), IS_BRUTEFORCE_MATCHER(false)
 	}
 
 	// init nonfree module for SURF support
-	cv::initModule_nonfree();
+	initModule_nonfree();
 
 	// setup measurements
 	clock = new Timer();
 	timer = new Timer();
 
 	// preinit vars to avoid segmentation faults
-	activeObjectPattern = 0;
+	activeObjectPattern = nullptr;
 
 	// set variables
 	isInitialized = false;
 }
 
-Analyzer::~Analyzer(void) {
+Analyzer::~Analyzer() {
     if (Controller::MODE_DEBUG) {
         cout << "Deleting Analyzer instance.." << endl;
     }
@@ -69,7 +71,7 @@ Analyzer::~Analyzer(void) {
 }
 
 Analyzer *Analyzer::getInstance() {
-    if (inst_ == NULL) {
+    if (inst_ == nullptr) {
 
         // create singleton instance
         inst_ = new Analyzer();
@@ -81,79 +83,79 @@ Analyzer *Analyzer::getInstance() {
     return inst_;
 }
 
-void Analyzer::initDetector(std::string &type) {
+void Analyzer::initDetector(string &type) {
     if (type == "SIFT") {
-        detector = cv::Ptr<cv::FeatureDetector>(new cv::SIFT(400, 3, 0.04, 25, 1.6));
+        detector = Ptr<FeatureDetector>(new SIFT(400, 3, 0.04, 25, 1.6));
     }
     else if (type == "FAST") {
-        detector = cv::Ptr<cv::FeatureDetector>(new cv::FastFeatureDetector(20, true));
+        detector = Ptr<FeatureDetector>(new FastFeatureDetector(20, true));
     }
     else if (type == "GFTT") {
-        detector = cv::Ptr<cv::FeatureDetector>(new cv::GFTTDetector(1000, 0.01, 1, 3, false, 0.04));
+        detector = Ptr<FeatureDetector>(new GFTTDetector(1000, 0.01, 1, 3, false, 0.04));
     }
     else if (type == "MSER") {
-        detector = cv::Ptr<cv::FeatureDetector>(new cv::MSER(5, 60, 14400, 0.25, .2, 200, 1.01, 0.003, 5));
+        detector = Ptr<FeatureDetector>(new MSER(5, 60, 14400, 0.25, .2, 200, 1.01, 0.003, 5));
     }
     else if (type == "DENSE") {
-        detector = cv::Ptr<cv::FeatureDetector>(new cv::DenseFeatureDetector(1.f, 1, 0.1f, 6, 0, true, false));
+        detector = Ptr<FeatureDetector>(new DenseFeatureDetector(1.f, 1, 0.1f, 6, 0, true, false));
     }
     else if (type == "STAR") {
-        detector = cv::Ptr<cv::FeatureDetector>(new cv::StarFeatureDetector(45, 30, 10, 8, 5));
+        detector = Ptr<FeatureDetector>(new StarFeatureDetector(45, 30, 10, 8, 5));
     }
     else if (type == "SURF") {
-        detector = cv::Ptr<cv::FeatureDetector>(new cv::SURF(600.0, 4, 2, true, false));
+        detector = Ptr<FeatureDetector>(new cv::SURF(600.0, 4, 2, true, false));
     }
     else if (type == "BRISK") {
-        detector = cv::Ptr<cv::FeatureDetector>(new cv::BRISK(30, 3, 1.0f));
+        detector = Ptr<FeatureDetector>(new BRISK(30, 3, 1.0f));
     }
     else if (type == "ORB") {
-        detector = cv::Ptr<cv::FeatureDetector>(new cv::ORB(500, 1.2f, 8, 31,
-                                                            0, 2, cv::ORB::HARRIS_SCORE, 31));
+        detector = Ptr<FeatureDetector>(new ORB(500, 1.2f, 8, 31,
+                                                            0, 2, ORB::HARRIS_SCORE, 31));
     }
     else if (type == "AKAZE") {
-        detector = cv::Ptr<cv::FeatureDetector>(new cv::AKAZE());
+        detector = Ptr<FeatureDetector>(new AKAZE());
     }
 }
 
-void Analyzer::initExtractor(std::string &type) {
+void Analyzer::initExtractor(string &type) {
     if (type == "SIFT") {
-        extractor = cv::Ptr<cv::DescriptorExtractor>(new cv::SIFT(0, 3, 0.04, 10, 1.6));
-        distance = cv::NORM_L2SQR;
+        extractor = Ptr<DescriptorExtractor>(new SIFT(0, 3, 0.04, 10, 1.6));
+        distance = NORM_L2SQR;
     }
     else if (type == "BRIEF") {
-        extractor = cv::Ptr<cv::DescriptorExtractor>(new cv::BriefDescriptorExtractor(32));
-        distance = cv::NORM_HAMMING;
+        extractor = Ptr<DescriptorExtractor>(new BriefDescriptorExtractor(32));
+        distance = NORM_HAMMING;
     }
     else if (type == "ORB") {
-        extractor = cv::Ptr<cv::DescriptorExtractor>(new cv::ORB(500, 1.2f, 8, 31, 0, 2, cv::ORB::HARRIS_SCORE, 31));
-        distance = cv::NORM_HAMMING;
+        extractor = Ptr<DescriptorExtractor>(new ORB(500, 1.2f, 8, 31, 0, 2, ORB::HARRIS_SCORE, 31));
+        distance = NORM_HAMMING;
     }
     else if (type == "SURF") {
-        extractor = cv::Ptr<cv::DescriptorExtractor>(new cv::SURF(600.0, 4, 2, true, false));
-        distance = cv::NORM_L2SQR;
+        extractor = Ptr<DescriptorExtractor>(new cv::SURF(600.0, 4, 2, true, false));
+        distance = NORM_L2SQR;
     }
     else if (type == "BRISK") {
-        extractor = cv::Ptr<cv::DescriptorExtractor>(new cv::BRISK(30, 3, 1.0f));
-        distance = cv::NORM_HAMMING;
+        extractor = Ptr<DescriptorExtractor>(new BRISK(30, 3, 1.0f));
+        distance = NORM_HAMMING;
     }
     else if (type == "FREAK") {
-        extractor = cv::Ptr<cv::DescriptorExtractor>(new cv::FREAK(false, false, 22.0f, 4, vector<int>()));
-        distance = cv::NORM_HAMMING;
+        extractor = Ptr<DescriptorExtractor>(new FREAK(false, false, 22.0f, 4, vector<int>()));
+        distance = NORM_HAMMING;
     }
     else if (type == "AKAZE") {
-        extractor = cv::Ptr<cv::DescriptorExtractor>(new cv::AKAZE());
-        distance = cv::NORM_HAMMING;
+        extractor = Ptr<DescriptorExtractor>(new AKAZE());
+        distance = NORM_HAMMING;
     }
 }
 
-void Analyzer::initMatcher(std::string &type) {
+void Analyzer::initMatcher(string &type) {
 
     if (type == "BF") {
 
         // NOTE: OpenCV Error: Assertion failed (K == 1 && update == 0 && mask.empty()) in batchDistance
         // https://github.com/MasteringOpenCV/code/issues/
-        matcher = cv::Ptr<cv::DescriptorMatcher>(new cv::BFMatcher(distance, false));
-        // matcher = cv::Ptr<cv::DescriptorMatcher>(new cv::BFMatcher(cv::NORM_HAMMING, false));
+        matcher = Ptr<DescriptorMatcher>(new BFMatcher(distance, false));
+        // matcher = Ptr<DescriptorMatcher>(new BFMatcher(NORM_HAMMING, false));
 
         // using bruteforce matching
         IS_BRUTEFORCE_MATCHER = true;
@@ -165,28 +167,29 @@ void Analyzer::initMatcher(std::string &type) {
 
     }
 
+	// TODO not implemented yet
     // else if (type == "FLANN_LSF") {
-    //  indexParams = new cv::flann::LshIndexParams(12, 20, 2);
-    //  searchParams = new cv::flann::SearchParams();
-    //  matcher = cv::Ptr<cv::DescriptorMatcher>(new cv::FlannBasedMatcher(indexParams, searchParams));
+    //  indexParams = new flann::LshIndexParams(12, 20, 2);
+    //  searchParams = new flann::SearchParams();
+    //  matcher = Ptr<DescriptorMatcher>(new FlannBasedMatcher(indexParams, searchParams));
     //  IS_BRUTEFORCE_MATCHER = false;
     // }
     // else if (type == "FLANN_KD") {
-    //  indexParams = new cv::flann::KDTreeIndexParams();
-    //  searchParams = new cv::flann::SearchParams();
-    //  matcher = cv::Ptr<cv::DescriptorMatcher>(new cv::FlannBasedMatcher(indexParams, searchParams));
+    //  indexParams = new flann::KDTreeIndexParams();
+    //  searchParams = new flann::SearchParams();
+    //  matcher = Ptr<DescriptorMatcher>(new FlannBasedMatcher(indexParams, searchParams));
     //  IS_BRUTEFORCE_MATCHER = false;
     // }
 }
 
-bool Analyzer::analyze(cv::Mat &gray, std::vector<cv::KeyPoint> &keypoints, cv::Mat &descriptors) {
+bool Analyzer::analyze(Mat &gray, vector<KeyPoint> &keypoints, Mat &descriptors) {
 
     bool returnThis = true;
 
     try {
 
         if (detector->name() == "Feature2D.SIFT" && extractor->name() == "Feature2D.ORB") {
-            // TODO fix testConfigurations.push_back(std::vector<string>{"SIFT", "ORB", ...});
+            // TODO fix testConfigurations.push_back(vector<string>{"SIFT", "ORB", ...});
             // see http://code.opencv.org/issues/2987 and http://code.opencv.org/issues/1277
 
             // OpenCV Error: Assertion failed (dsize.area() || (inv_scale_x > 0 && inv_scale_y > 0)) in resize, file ../opencv-2.4.11/modules/imgproc/src/imgwarp.cpp, line 1969
@@ -196,9 +199,9 @@ bool Analyzer::analyze(cv::Mat &gray, std::vector<cv::KeyPoint> &keypoints, cv::
 
             // fix test results (dirty way);
             if (IS_BRUTEFORCE_MATCHER) {
-                Controller::statistics("Matcher", (string) "BF");
+                Controller::statistics("Matcher", static_cast<string>("BF"));
             } else {
-                Controller::statistics("Matcher", (string) "FLANN");
+                Controller::statistics("Matcher", static_cast<string>("FLANN"));
             }
             return false;
         }
@@ -245,7 +248,7 @@ bool Analyzer::analyze(cv::Mat &gray, std::vector<cv::KeyPoint> &keypoints, cv::
             return false;
         }
 
-    } catch (cv::Exception &exception) {
+    } catch (Exception &exception) {
         if (Controller::MODE_DEBUG) {
             // NOTE: e.g. dark images can contain 0 features!
             cout << exception.what() << endl;
@@ -275,8 +278,8 @@ bool Analyzer::analyzeSceneFrame(SceneFrame &sceneFrame) {
     analyze(sceneFrame.gray, sceneFrame.keypoints, sceneFrame.descriptors);
 
     if (Controller::MODE_STATISTICS) {
-        Controller::statistics("SceneKeypoints", (int) sceneFrame.keypoints.size());
-        Controller::statistics("ObjectKeypoints", (int) activeObjectPattern->keypoints.size());
+        Controller::statistics("SceneKeypoints", static_cast<int>(sceneFrame.keypoints.size()));
+        Controller::statistics("ObjectKeypoints", static_cast<int>(activeObjectPattern->keypoints.size()));
     }
 
     if (Controller::MODE_DEBUG) {
@@ -302,23 +305,23 @@ bool Analyzer::analyzeSceneFrame(SceneFrame &sceneFrame) {
 	return true;
 }
 
-void Analyzer::matchBinaryDescriptors(SceneFrame &sceneFrame, std::vector<cv::Point2f> &goodTrainKeypoints,
-                                      std::vector<cv::Point2f> &goodSceneKeypoints) {
+void Analyzer::matchBinaryDescriptors(SceneFrame &sceneFrame, vector<Point2f> &goodTrainKeypoints,
+                                      vector<Point2f> &goodSceneKeypoints) {
 
     if (Controller::MODE_DEBUG) {
         cout << "Binary descriptors detected..." << endl;
     }
 
     if (Controller::MODE_STATISTICS) {
-        Controller::statistics("DescriptorType", (string) "binary");
+        Controller::statistics("DescriptorType", static_cast<string>("binary"));
     }
 
     timer->restart();
 
-    cv::Mat resultIndex;
-    cv::Mat distanceIndex;
-    std::vector<std::vector<cv::DMatch> > matches;
-    std::vector<int> objectKeypointIndex, sceneKeypointIndex;
+    Mat resultIndex;
+    Mat distanceIndex;
+    vector<vector<DMatch> > matches;
+    vector<int> objectKeypointIndex, sceneKeypointIndex;
 
     if (IS_BRUTEFORCE_MATCHER) {
 
@@ -327,7 +330,7 @@ void Analyzer::matchBinaryDescriptors(SceneFrame &sceneFrame, std::vector<cv::Po
         }
 
         if (Controller::MODE_STATISTICS) {
-            Controller::statistics("Matcher", (string) "BF");
+            Controller::statistics("Matcher", static_cast<string>("BF"));
         }
 
         // TODO train first
@@ -354,7 +357,7 @@ void Analyzer::matchBinaryDescriptors(SceneFrame &sceneFrame, std::vector<cv::Po
     } else {
 
         // Create Flann LSH index
-        cv::flann::Index flannIndex(sceneFrame.descriptors, cv::flann::LshIndexParams(12, 20, 2),
+        flann::Index flannIndex(sceneFrame.descriptors, flann::LshIndexParams(12, 20, 2),
                                     cvflann::FLANN_DIST_HAMMING);
 
         if (Controller::MODE_DEBUG) {
@@ -362,15 +365,15 @@ void Analyzer::matchBinaryDescriptors(SceneFrame &sceneFrame, std::vector<cv::Po
         }
 
         if (Controller::MODE_STATISTICS) {
-            Controller::statistics("Matcher", (string) "Flann");
+            Controller::statistics("Matcher", static_cast<string>("Flann"));
         }
 
-        resultIndex = cv::Mat(activeObjectPattern->descriptors.rows, K_GROUPS, CV_32SC1);
-        distanceIndex = cv::Mat(activeObjectPattern->descriptors.rows, K_GROUPS,
+        resultIndex = Mat(activeObjectPattern->descriptors.rows, K_GROUPS, CV_32SC1);
+        distanceIndex = Mat(activeObjectPattern->descriptors.rows, K_GROUPS,
                                 CV_32FC1);
 
         flannIndex.knnSearch(activeObjectPattern->descriptors, resultIndex, distanceIndex, K_GROUPS,
-                             cv::flann::SearchParams());
+                             flann::SearchParams());
 
         for (int i = 0; i < activeObjectPattern->descriptors.rows; ++i) {
 
@@ -398,31 +401,31 @@ void Analyzer::matchBinaryDescriptors(SceneFrame &sceneFrame, std::vector<cv::Po
     }
 
     if (Controller::MODE_STATISTICS) {
-        Controller::statistics("MatchingDescriptors(ms)", (double) timer->getMillis());
+        Controller::statistics("MatchingDescriptors(ms)", static_cast<double>(timer->getMillis()));
     }
 }
 
-void Analyzer::matchFloatDescriptors(SceneFrame &sceneFrame, std::vector<cv::Point2f> &goodTrainKeypoints,
-                                     std::vector<cv::Point2f> &goodSceneKeypoints) {
+void Analyzer::matchFloatDescriptors(SceneFrame &sceneFrame, vector<Point2f> &goodTrainKeypoints,
+                                     vector<Point2f> &goodSceneKeypoints) {
 
     if (Controller::MODE_DEBUG) {
         cout << "Float descriptors detected..." << endl;
     }
 
     if (Controller::MODE_STATISTICS) {
-        Controller::statistics("DescriptorType", (string) "float");
+        Controller::statistics("DescriptorType", static_cast<string>("float"));
     }
 
     timer->restart();
 
     // temp result objects
-    cv::Mat resultIndex;
-    cv::Mat distanceIndex;
-    std::vector<std::vector<cv::DMatch> > matches;
+    Mat resultIndex;
+    Mat distanceIndex;
+    vector<vector<DMatch> > matches;
 
     // Find correspondences by NNDR (Nearest Neighbor Distance Ratio)
     // Check if this descriptor matches with those of the objects
-    std::vector<int> objectKeypointIndex, sceneKeypointIndex; // Used for homography
+    vector<int> objectKeypointIndex, sceneKeypointIndex; // Used for homography
 
     if (IS_BRUTEFORCE_MATCHER) {
 
@@ -431,7 +434,7 @@ void Analyzer::matchFloatDescriptors(SceneFrame &sceneFrame, std::vector<cv::Poi
         }
 
         if (Controller::MODE_STATISTICS) {
-            Controller::statistics("Matcher", (string) "BF");
+            Controller::statistics("Matcher", static_cast<string>("BF"));
         }
 
         // knnMatch
@@ -458,9 +461,9 @@ void Analyzer::matchFloatDescriptors(SceneFrame &sceneFrame, std::vector<cv::Poi
                 }
             }
 
-        } catch (std::out_of_range &exception) {
+        } catch (out_of_range &exception) {
             // fix this error:
-            // terminate called after throwing an instance of 'std::out_of_range'
+            // terminate called after throwing an instance of 'out_of_range'
             // what():  vector::_M_range_check
             if (Controller::MODE_DEBUG) {
                 cvError(0, "Analyzer", "Matches out of range!", __FILE__, __LINE__);
@@ -471,7 +474,7 @@ void Analyzer::matchFloatDescriptors(SceneFrame &sceneFrame, std::vector<cv::Poi
     } else {
 
         // Create Flann KDTree index
-        cv::flann::Index flannIndex(sceneFrame.descriptors, cv::flann::KDTreeIndexParams(),
+        flann::Index flannIndex(sceneFrame.descriptors, flann::KDTreeIndexParams(),
                                     cvflann::FLANN_DIST_EUCLIDEAN);
 
         if (Controller::MODE_DEBUG) {
@@ -479,16 +482,16 @@ void Analyzer::matchFloatDescriptors(SceneFrame &sceneFrame, std::vector<cv::Poi
         }
 
         if (Controller::MODE_STATISTICS) {
-            Controller::statistics("Matcher", (string) "Flann");
+            Controller::statistics("Matcher", static_cast<string>("Flann"));
         }
 
-        resultIndex = cv::Mat(activeObjectPattern->descriptors.rows, K_GROUPS, CV_32SC1); // Results index
-        distanceIndex = cv::Mat(activeObjectPattern->descriptors.rows, K_GROUPS,
+        resultIndex = Mat(activeObjectPattern->descriptors.rows, K_GROUPS, CV_32SC1); // Results index
+        distanceIndex = Mat(activeObjectPattern->descriptors.rows, K_GROUPS,
                                 CV_32FC1); // Distance resultIndex are CV_32FC1
 
         // search (nearest neighbor)
         flannIndex.knnSearch(activeObjectPattern->descriptors, resultIndex, distanceIndex, K_GROUPS,
-                             cv::flann::SearchParams());
+                             flann::SearchParams());
 
         try {
 
@@ -514,9 +517,9 @@ void Analyzer::matchFloatDescriptors(SceneFrame &sceneFrame, std::vector<cv::Poi
                 }
             }
 
-        } catch (std::out_of_range &exception) {
+        } catch (out_of_range &exception) {
             // fix this error:
-            // terminate called after throwing an instance of 'std::out_of_range'
+            // terminate called after throwing an instance of 'out_of_range'
             // what():  vector::_M_range_check
             if (Controller::MODE_DEBUG) {
                 cvError(0, "Analyzer", "Matches out of range!", __FILE__, __LINE__);
@@ -530,7 +533,7 @@ void Analyzer::matchFloatDescriptors(SceneFrame &sceneFrame, std::vector<cv::Poi
     }
 
     if (Controller::MODE_STATISTICS) {
-        Controller::statistics("MatchingDescriptors(ms)", (double) timer->getMillis());
+        Controller::statistics("MatchingDescriptors(ms)", static_cast<double>(timer->getMillis()));
     }
 
 }
@@ -554,11 +557,11 @@ bool Analyzer::process(SceneFrame &sceneFrame) {
         analyzeSceneFrame(sceneFrame);
 
         if (Controller::MODE_STATISTICS) {
-            Controller::statistics("AnalyzeSceneFrame(ms)", (double) timer->getMillis());
+            Controller::statistics("AnalyzeSceneFrame(ms)", static_cast<double>(timer->getMillis()));
         }
 
-        std::vector<cv::Point2f> goodTrainKeypoints;
-        std::vector<cv::Point2f> goodSceneKeypoints;
+        vector<Point2f> goodTrainKeypoints;
+        vector<Point2f> goodSceneKeypoints;
 
         // check preconditions
         // there have to be descriptors! (catch black screens etc)
@@ -605,7 +608,7 @@ bool Analyzer::process(SceneFrame &sceneFrame) {
                 inliers = calcInliers(sceneFrame, goodTrainKeypoints, goodSceneKeypoints);
 
                 if (Controller::MODE_STATISTICS) {
-                    Controller::statistics("InliersCalc(ms)", (double) timer->getMillis());
+                    Controller::statistics("InliersCalc(ms)", static_cast<double>(timer->getMillis()));
                 }
 
             } else {
@@ -637,23 +640,23 @@ bool Analyzer::process(SceneFrame &sceneFrame) {
             perspectiveTransform(activeObjectPattern->points2d, sceneFrame.objectPosition, sceneFrame.homography);
 
             if (Controller::MODE_STATISTICS) {
-                Controller::statistics("PerspectiveTransform(ms)", (double) timer->getMillis());
+                Controller::statistics("PerspectiveTransform(ms)", static_cast<double>(timer->getMillis()));
             }
 
             if (Controller::MODE_USE_WINDOWS) {
 
                 // drawing contours
-                Drawer::drawContourWithRescale(sceneFrame.gray, sceneFrame.objectPosition, cv::Scalar(0, 255, 0));
+                Drawer::drawContourWithRescale(sceneFrame.gray, sceneFrame.objectPosition, Scalar(0, 255, 0));
 
                 //-- Show detected matches
-//        cv::Mat Drawer::drawMatchesWindow(cv::Mat query, cv::Mat pattern, const std::vector<cv::KeyPoint> &queryKp,
-//                                           const std::vector<cv::KeyPoint> &trainKp, std::vector<cv::DMatch> matches,
+//        Mat Drawer::drawMatchesWindow(Mat query, Mat pattern, const vector<KeyPoint> &queryKp,
+//                                           const vector<KeyPoint> &trainKp, vector<DMatch> matches,
 //                                           int maxMatchesDrawn) {
 
                 // open custom windows
 				string window_name = DETECTOR + "-" + EXTRACTOR + "-" + MATCHER;
-				cv::namedWindow(window_name, 0); //resizable window;
-	            cv::resizeWindow(window_name,800,800);
+				namedWindow(window_name, 0); //resizable window;
+	            resizeWindow(window_name,800,800);
 				imshow(window_name, sceneFrame.gray);
             }
 
@@ -667,7 +670,7 @@ bool Analyzer::process(SceneFrame &sceneFrame) {
         }
 
         if (Controller::MODE_STATISTICS) {
-            Controller::statistics("AnalyzerProcess(ms)", (double) clock->getMillis());
+            Controller::statistics("AnalyzerProcess(ms)", static_cast<double>(clock->getMillis()));
         }
 
     } else {
@@ -687,14 +690,15 @@ bool Analyzer::process(SceneFrame &sceneFrame) {
 
 
 
-int Analyzer::calcInliers(SceneFrame &sceneFrame, std::vector<cv::Point2f> &goodTrainKeypoints,
-                          std::vector<cv::Point2f> &goodSceneKeypoints) {
+int Analyzer::calcInliers(SceneFrame &sceneFrame, vector<Point2f> &goodTrainKeypoints,
+                          vector<Point2f> &goodSceneKeypoints) const
+{
 
-    std::vector<uchar> outlierMask;  // Used for homography
+    vector<uchar> outlierMask;  // Used for homography
 
     sceneFrame.homography = findHomography(goodTrainKeypoints,
                                            goodSceneKeypoints,
-                                           cv::RANSAC,
+                                           RANSAC,
                                            RANSAC_REPROJECTION_THRESHOLD,
                                            outlierMask);
 
@@ -713,8 +717,8 @@ int Analyzer::calcInliers(SceneFrame &sceneFrame, std::vector<cv::Point2f> &good
     }
 
     if (Controller::MODE_STATISTICS) {
-        Controller::statistics("Inliers", (int) inliers);
-        Controller::statistics("Outliers", (int) outliers);
+        Controller::statistics("Inliers", static_cast<int>(inliers));
+        Controller::statistics("Outliers", static_cast<int>(outliers));
     }
 
     return inliers;
@@ -726,14 +730,14 @@ void Analyzer::match(SceneFrame &query) {
     matcher->match(query.descriptors, query.matches);
 }
 
-void Analyzer::train(const cv::Mat &descriptors) {
+void Analyzer::train(const Mat &descriptors) {
 
     // clear old training data
     matcher->clear();
 
     // TODO register pattern to list and extends descriptor vector to hold multiple patterns?
     // create a descriptor vector to store descriptor data
-    std::vector<cv::Mat> descriptorList(1);
+    vector<Mat> descriptorList(1);
     descriptorList[0] = descriptors.clone();
 
     // promote descriptor list to matcher instance
@@ -745,23 +749,24 @@ void Analyzer::train(const cv::Mat &descriptors) {
 
 // TODO überarbeiten
 bool Analyzer::refineMatches
-        (SceneFrame &query, ObjectPattern &pattern) {
+        (SceneFrame &query, ObjectPattern &pattern) const
+{
 
     const int minNumberMatchesAllowed = 8;
 
     // TODO make matching working..
-    cout << "RefineMatches [START]: SceneFrame Keypoints: " << std::setw(4) << query.keypoints.size() <<
-    "; SceneFrame Matches: " << std::setw(4) <<
+    cout << "RefineMatches [START]: SceneFrame Keypoints: " << setw(4) << query.keypoints.size() <<
+    "; SceneFrame Matches: " << setw(4) <<
     query.matches.size() << endl;
 
-    std::vector<cv::KeyPoint> trainKeypoints = pattern.keypoints;
+    vector<KeyPoint> trainKeypoints = pattern.keypoints;
 
     if (query.matches.size() < minNumberMatchesAllowed)
         return false;
 
-    // Prepare data for cv::findHomography
-    std::vector<cv::Point2f> srcPoints(query.matches.size());
-    std::vector<cv::Point2f> dstPoints(query.matches.size());
+    // Prepare data for findHomography
+    vector<Point2f> srcPoints(query.matches.size());
+    vector<Point2f> dstPoints(query.matches.size());
 
     for (size_t i = 0; i < query.matches.size(); i++) {
 
@@ -778,8 +783,8 @@ bool Analyzer::refineMatches
     cout << srcPoints.size() << "::" << dstPoints.size() << endl;
 
     // Find homography matrix and get inliers mask
-    std::vector<unsigned char> inliersMask(srcPoints.size());
-    cv::Mat homography = cv::findHomography(srcPoints,
+    vector<unsigned char> inliersMask(srcPoints.size());
+    Mat homography = findHomography(srcPoints,
                                             dstPoints,
                                             CV_FM_RANSAC,
                                             3.0,
@@ -788,7 +793,7 @@ bool Analyzer::refineMatches
     // TODO update homo here
     //trackerObject.homography = &homography;
 
-    std::vector<cv::DMatch> inliers;
+    vector<DMatch> inliers;
     for (size_t i = 0; i < inliersMask.size(); i++) {
         if (inliersMask[i]) {
             inliers.push_back(query.matches[i]);
@@ -797,8 +802,8 @@ bool Analyzer::refineMatches
 
     query.matches.swap(inliers);
 
-    cout << "RefineMatches [ END ]: SceneFrame Keypoints: " << std::setw(4) << query.keypoints.size() <<
-    "; SceneFrame Matches: " << std::setw(4) <<
+    cout << "RefineMatches [ END ]: SceneFrame Keypoints: " << setw(4) << query.keypoints.size() <<
+    "; SceneFrame Matches: " << setw(4) <<
     query.matches.size() << endl;
 
     return query.matches.size() > minNumberMatchesAllowed;
@@ -810,18 +815,18 @@ bool Analyzer::initialize() {
 
         // delete activeObjectPattern
         delete activeObjectPattern;
-        activeObjectPattern = 0;
+        activeObjectPattern = nullptr;
 
         // clear detector/extractor instances if needed
-        if (Analyzer::detector || Analyzer::extractor) {
-            Analyzer::releaseOpenCV();
+        if (detector || extractor) {
+            releaseOpenCV();
         }
 
         // init detector/extractor
-        if (!Analyzer::DETECTOR.empty() && !Analyzer::EXTRACTOR.empty() && !Analyzer::MATCHER.empty()) {
-            Analyzer::initDetector(DETECTOR);
-            Analyzer::initExtractor(EXTRACTOR);
-            Analyzer::initMatcher(MATCHER);
+        if (!DETECTOR.empty() && !EXTRACTOR.empty() && !MATCHER.empty()) {
+            initDetector(DETECTOR);
+            initExtractor(EXTRACTOR);
+            initMatcher(MATCHER);
         } else {
             return false;
         }
@@ -833,13 +838,13 @@ bool Analyzer::initialize() {
 }
 
 bool Analyzer::releaseOpenCV() {
-    Analyzer::detector.release();
-    Analyzer::extractor.release();
-    Analyzer::matcher.release();
+    detector.release();
+    extractor.release();
+    matcher.release();
     return true;
 }
 
-bool Analyzer::createObjectPattern(cv::Mat &gray) {
+bool Analyzer::createObjectPattern(Mat &gray) {
 
     bool returnThis = false;
 
@@ -862,7 +867,7 @@ bool Analyzer::createObjectPattern(cv::Mat &gray) {
 bool Analyzer::missingObjectPattern() {
     bool returnThis = true;
     if (!activeObjectPattern) {
-        cv::Mat objectImage = cv::imread(Controller::STORAGE_PATH + Controller::DEFAULT_OBJECT_IMAGE,
+        Mat objectImage = imread(Controller::STORAGE_PATH + Controller::DEFAULT_OBJECT_IMAGE,
                                          CV_LOAD_IMAGE_GRAYSCALE);
         createObjectPattern(objectImage);
     } else {

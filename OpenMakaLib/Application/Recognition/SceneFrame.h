@@ -4,34 +4,36 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
+using namespace cv;
+
 namespace om {
 
     class SceneFrame {
 
     public:
 
-        SceneFrame(cv::Mat &rgbInputFrame, cv::Mat &grayInputFrame);
+        SceneFrame(Mat &rgbInputFrame, Mat &grayInputFrame);
 
-        virtual ~SceneFrame(void);
+        virtual ~SceneFrame();
 
-        cv::Mat rgb;
-        cv::Mat gray;
-        cv::Mat homography;
+        Mat rgb;
+        Mat gray;
+        Mat homography;
 
-        std::vector<cv::KeyPoint> keypoints;
-        cv::Mat descriptors;
-        std::vector<cv::DMatch> matches;
+        vector<KeyPoint> keypoints;
+        Mat descriptors;
+        vector<DMatch> matches;
 
-        std::vector<cv::Point2f> objectPosition;
+        vector<Point2f> objectPosition;
 
         static int MAX_IMAGE_SIZE;
         static float IMAGE_SCALE;
 
-        std::string getProcessingResolution();
+        string getProcessingResolution() const;
 
-        std::string getInputResolution();
+        string getInputResolution() const;
     };
 
-};
+}
 
 #endif

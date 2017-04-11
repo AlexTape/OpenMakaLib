@@ -10,7 +10,7 @@
 using namespace std;
 using namespace om;
 
-Timer::Timer(void) {
+Timer::Timer() {
 
     if (Controller::MODE_DEBUG) {
         cout << "Creating Timer instance.." << endl;
@@ -20,7 +20,7 @@ Timer::Timer(void) {
 
 }
 
-Timer::~Timer(void) {
+Timer::~Timer() {
     if (Controller::MODE_DEBUG) {
         cout << "Deleting Timer instance.." << endl;
     }
@@ -30,9 +30,10 @@ void Timer::restart() {
     time = clock();
 }
 
-double Timer::getMillis() {
+double Timer::getMillis() const
+{
     double diff = clock() - time;
-    return (diff) / (CLOCKS_PER_SEC / 1000);
+    return diff / (CLOCKS_PER_SEC / 1000);
 }
 
 #endif

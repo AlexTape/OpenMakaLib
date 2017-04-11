@@ -5,10 +5,6 @@
 
 #ifdef __ANDROID__
 #include <android/log.h>
-#include <android/native_window.h> // requires ndk r5 or newer
-#include <EGL/egl.h> // requires ndk r5 or newer
-#include <GLES/gl.h>
-#include <GLES/glext.h>
 #endif
 
 #include <opencv2/core/core.hpp>
@@ -31,7 +27,7 @@ using namespace cv;
 using namespace om;
 
 // init static members
-Controller* Controller::inst_ = NULL;
+Controller* Controller::inst_ = nullptr;
 bool Controller::MODE_OBJECT_DETECTION;
 bool Controller::MODE_TRACKING;
 bool Controller::MODE_OPENGL;
@@ -43,16 +39,16 @@ Analyzer* Controller::analyzer;
 Tracker* Controller::tracker;
 Statistics* Controller::stats;
 bool Controller::isInitialized;
-cv::Size Controller::FRAME_SIZE;
+Size Controller::FRAME_SIZE;
 string Controller::STORAGE_PATH;
 string Controller::CONFIG_FILE;
 string Controller::DEFAULT_OBJECT_IMAGE;
 string Controller::STATISTICS_FILE;
 
 
-Controller::Controller(void)
+Controller::Controller()
 {
-	if (Controller::MODE_DEBUG)
+	if (MODE_DEBUG)
 	{
 		cout << "Creating Controller instance.." << endl;
 	}
@@ -64,7 +60,7 @@ Controller::Controller(void)
 	tracker = Tracker::getInstance();
 
 	// initialize variables
-	sceneFrame = 0;
+	sceneFrame = nullptr;
 
 	// set acutal state
 	isInitialized = false;
@@ -94,9 +90,9 @@ Controller::Controller(void)
 #endif
 }
 
-Controller::~Controller(void)
+Controller::~Controller()
 {
-	if (Controller::MODE_DEBUG)
+	if (MODE_DEBUG)
 	{
 		cout << "Deleting Controller instance.." << endl;
 	}
@@ -114,7 +110,7 @@ Controller::~Controller(void)
 
 Controller* Controller::getInstance()
 {
-	if (inst_ == NULL)
+	if (inst_ == nullptr)
 	{
 		inst_ = new Controller();
 	}
@@ -122,66 +118,66 @@ Controller* Controller::getInstance()
 }
 
 // NEEDED
-int Controller::initialize(cv::Mat& frame, string storagePath)
+int Controller::initialize(Mat& frame, string storagePath, string configFile) const
 {
 	// set default config file
-	CONFIG_FILE = "\\config\\config.xml";
+	CONFIG_FILE = configFile;
 
 	// initializing..
 	isInitialized = false;
 
 	// grab frame size
-	Controller::FRAME_SIZE = cv::Size(frame.cols, frame.rows);
+	FRAME_SIZE = Size(frame.cols, frame.rows);
 
 	// define storage path
-	Controller::STORAGE_PATH = storagePath;
+	STORAGE_PATH = storagePath;
 
 	// load config file
-	cv::FileStorage storage(STORAGE_PATH + CONFIG_FILE, cv::FileStorage::READ);
+	FileStorage storage(STORAGE_PATH + CONFIG_FILE, FileStorage::READ);
 
 	// load default image/pattern
-	Controller::DEFAULT_OBJECT_IMAGE = (string) storage["defaultObjectImage"];
+	DEFAULT_OBJECT_IMAGE = static_cast<string>(storage["defaultObjectImage"]);
 
 	// load statistics file path
-	Controller::STATISTICS_FILE = (string) storage["statisticsFile"];
+	STATISTICS_FILE = static_cast<string>(storage["statisticsFile"]);
 
 	// load environment variables
-	string statistics = (string) storage["statisticsMode"];
-	Controller::MODE_STATISTICS = statistics == "true";
-	string debug = (string) storage["debugMode"];
-	Controller::MODE_DEBUG = debug == "true";
-	string windows = (string) storage["useWindows"];
-	Controller::MODE_USE_WINDOWS = windows == "true";
-	string saveFrames = (string) storage["saveResultFrames"];
-	Controller::MODE_SAVE_RESULT_FRAMES = saveFrames == "true";
+	string statistics = static_cast<string>(storage["statisticsMode"]);
+	MODE_STATISTICS = statistics == "true";
+	string debug = static_cast<string>(storage["debugMode"]);
+	MODE_DEBUG = debug == "true";
+	string windows = static_cast<string>(storage["useWindows"]);
+	MODE_USE_WINDOWS = windows == "true";
+	string saveFrames = static_cast<string>(storage["saveResultFrames"]);
+	MODE_SAVE_RESULT_FRAMES = saveFrames == "true";
 
 	// load scene frame attributes
-	cv::FileNode sceneFrameNode = storage["sceneFrame"];
-	SceneFrame::MAX_IMAGE_SIZE = (int) sceneFrameNode["maxImageSize"];
+	FileNode sceneFrameNode = storage["sceneFrame"];
+	SceneFrame::MAX_IMAGE_SIZE = static_cast<int>(sceneFrameNode["maxImageSize"]);
 
 	// load analyzer attributes
-	cv::FileNode analyzerNode = storage["analyzer"];
-	Analyzer::DETECTOR = (string) analyzerNode["detector"];
-	Analyzer::EXTRACTOR = (string) analyzerNode["extractor"];
-	Analyzer::MATCHER = (string) analyzerNode["matcher"];
-	Analyzer::MINIMUM_INLIERS = (int) analyzerNode["minimumInliers"];
-	Analyzer::MINIMUM_MATCHES = (int) analyzerNode["minimumMatches"];
-	Analyzer::NN_DISTANCE_RATIO = (float) analyzerNode["nnDistanceRatio"];
-	Analyzer::K_GROUPS = (int) analyzerNode["kGroups"];
-	Analyzer::RANSAC_REPROJECTION_THRESHOLD = (double) analyzerNode["ransacReprojectionThreshold"];
+	FileNode analyzerNode = storage["analyzer"];
+	Analyzer::DETECTOR = static_cast<string>(analyzerNode["detector"]);
+	Analyzer::EXTRACTOR = static_cast<string>(analyzerNode["extractor"]);
+	Analyzer::MATCHER = static_cast<string>(analyzerNode["matcher"]);
+	Analyzer::MINIMUM_INLIERS = static_cast<int>(analyzerNode["minimumInliers"]);
+	Analyzer::MINIMUM_MATCHES = static_cast<int>(analyzerNode["minimumMatches"]);
+	Analyzer::NN_DISTANCE_RATIO = static_cast<float>(analyzerNode["nnDistanceRatio"]);
+	Analyzer::K_GROUPS = static_cast<int>(analyzerNode["kGroups"]);
+	Analyzer::RANSAC_REPROJECTION_THRESHOLD = static_cast<double>(analyzerNode["ransacReprojectionThreshold"]);
 
 	// initialize analyzer
 	analyzer->initialize();
 
 	// load tracker attributes
-	cv::FileNode trackerNode = storage["tracker"];
-	Tracker::MAX_CORNERS = (int) trackerNode["maxCorners"];
-	Tracker::QUALITY_LEVEL = (double) trackerNode["qualityLevel"];
-	Tracker::MINIMUM_DISTANCE = (double) trackerNode["minimumDistance"];
+	FileNode trackerNode = storage["tracker"];
+	Tracker::MAX_CORNERS = static_cast<int>(trackerNode["maxCorners"]);
+	Tracker::QUALITY_LEVEL = static_cast<double>(trackerNode["qualityLevel"]);
+	Tracker::MINIMUM_DISTANCE = static_cast<double>(trackerNode["minimumDistance"]);
 
 	// add default object
-	cv::Mat objectImage = cv::imread(STORAGE_PATH + DEFAULT_OBJECT_IMAGE,
-	                                 CV_LOAD_IMAGE_GRAYSCALE);
+	Mat objectImage = imread(STORAGE_PATH + DEFAULT_OBJECT_IMAGE,
+	                         CV_LOAD_IMAGE_GRAYSCALE);
 	analyzer->createObjectPattern(objectImage);
 
 	// release storage
@@ -190,7 +186,7 @@ int Controller::initialize(cv::Mat& frame, string storagePath)
 		storage.release();
 	}
 
-	if (Controller::MODE_DEBUG)
+	if (MODE_DEBUG)
 	{
 		cout << "Loading attributes.." << endl;
 		cout << "-----------------------------------------------------" << endl;
@@ -230,15 +226,15 @@ int Controller::initialize(cv::Mat& frame, string storagePath)
 	return 1;
 }
 
-int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string imageName)
+int Controller::displayFunction(Mat& mRgbaFrame, Mat& mGrayFrame, string imageName)
 {
-	if (Controller::MODE_STATISTICS)
+	if (MODE_STATISTICS)
 	{
 		clock->restart();
-		Controller::stats->reset();
-		Controller::statistics("ImageName", (string) imageName);
-		Controller::statistics("Detector", (string) Analyzer::DETECTOR);
-		Controller::statistics("Extractor", (string) Analyzer::EXTRACTOR);
+		stats->reset();
+		statistics("ImageName", static_cast<string>(imageName));
+		statistics("Detector", static_cast<string>(Analyzer::DETECTOR));
+		statistics("Extractor", static_cast<string>(Analyzer::EXTRACTOR));
 	}
 
 	int returnThis = 0;
@@ -264,12 +260,12 @@ int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string
 			// create new scene frame
 			sceneFrame = new SceneFrame(mRgbaFrame, mGrayFrame);
 
-			if (Controller::MODE_STATISTICS)
+			if (MODE_STATISTICS)
 			{
-				Controller::statistics("InputResolution",
-				                       (string) sceneFrame->getInputResolution());
-				Controller::statistics("ProcessingResolution",
-				                       (string) sceneFrame->getProcessingResolution());
+				statistics("InputResolution",
+				           static_cast<string>(sceneFrame->getInputResolution()));
+				statistics("ProcessingResolution",
+				           static_cast<string>(sceneFrame->getProcessingResolution()));
 				timer->restart();
 			}
 
@@ -277,14 +273,14 @@ int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string
 			STATE_OBJECT_FOUND = analyzer->process(*sceneFrame);
 
 			// write statistics for analyzer in non-tracking mode
-			if (Controller::MODE_STATISTICS)
+			if (MODE_STATISTICS)
 			{
-				Controller::statistics("AnalyzerProcess(ms)", (double) timer->getMillis());
-				Controller::statistics("ObjectFound", (bool) STATE_OBJECT_FOUND);
+				statistics("AnalyzerProcess(ms)", static_cast<double>(timer->getMillis()));
+				statistics("ObjectFound", static_cast<bool>(STATE_OBJECT_FOUND));
 			}
 
 			// drawing green contours
-			Drawer::drawContourWithRescale(mRgbaFrame, sceneFrame->objectPosition, cv::Scalar(0, 255, 0));
+			Drawer::drawContourWithRescale(mRgbaFrame, sceneFrame->objectPosition, Scalar(0, 255, 0));
 		}
 
 		// ..and tracking enabled
@@ -299,12 +295,12 @@ int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string
 				// create new scene frame
 				sceneFrame = new SceneFrame(mRgbaFrame, mGrayFrame);
 
-				if (Controller::MODE_STATISTICS)
+				if (MODE_STATISTICS)
 				{
-					Controller::statistics("InputResolution",
-					                       (string) sceneFrame->getInputResolution());
-					Controller::statistics("ProcessingResolution",
-					                       (string) sceneFrame->getProcessingResolution());
+					statistics("InputResolution",
+					           static_cast<string>(sceneFrame->getInputResolution()));
+					statistics("ProcessingResolution",
+					           static_cast<string>(sceneFrame->getProcessingResolution()));
 					timer->restart();
 				}
 
@@ -312,48 +308,48 @@ int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string
 				STATE_OBJECT_FOUND = analyzer->process(*sceneFrame);
 
 				// write statistics for analyzer in tracking mode
-				if (Controller::MODE_STATISTICS)
+				if (MODE_STATISTICS)
 				{
-					Controller::statistics("AnalyzerProcess(ms)", (double) timer->getMillis());
-					Controller::statistics("ObjectFound", (bool) STATE_OBJECT_FOUND);
+					statistics("AnalyzerProcess(ms)", static_cast<double>(timer->getMillis()));
+					statistics("ObjectFound", static_cast<bool>(STATE_OBJECT_FOUND));
 				}
 
 				// if object found
 				if (STATE_OBJECT_FOUND)
 				{
 					// resize gray image
-					cv::Mat trackerFrame = sceneFrame->gray;
+					Mat trackerFrame = sceneFrame->gray;
 					try
 					{
-						cv::resize(mGrayFrame, trackerFrame, trackerFrame.size());
+						resize(mGrayFrame, trackerFrame, trackerFrame.size());
 					}
-					catch (cv::Exception& exception)
+					catch (Exception& exception)
 					{
 						cvError(0, "TrackerFrame", "Resizing failed!", __FILE__, __LINE__);
 						cout << exception.what() << endl;
 					}
 
-					if (Controller::MODE_STATISTICS)
+					if (MODE_STATISTICS)
 					{
-						Controller::statistics("InputResolution",
-						                       (string) sceneFrame->getInputResolution());
-						Controller::statistics("ProcessingResolution",
-						                       (string) sceneFrame->getProcessingResolution());
+						statistics("InputResolution",
+						           static_cast<string>(sceneFrame->getInputResolution()));
+						statistics("ProcessingResolution",
+						           static_cast<string>(sceneFrame->getProcessingResolution()));
 						timer->restart();
 					}
 
 					// analyzer processing
 					bool isInImage = tracker->isObjectInsideImage(trackerFrame.size(), sceneFrame->objectPosition);
 
-					if (Controller::MODE_STATISTICS)
+					if (MODE_STATISTICS)
 					{
-						Controller::statistics("isObjectInsideImage(ms)", (double) timer->getMillis());
-						Controller::statistics("isInImage", (bool) isInImage);
+						statistics("isObjectInsideImage(ms)", static_cast<double>(timer->getMillis()));
+						statistics("isInImage", static_cast<bool>(isInImage));
 					}
 
 					if (isInImage)
 					{
-						if (Controller::MODE_STATISTICS)
+						if (MODE_STATISTICS)
 						{
 							timer->restart();
 						}
@@ -361,9 +357,9 @@ int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string
 						// initialize tracking
 						tracker->initialize(trackerFrame, sceneFrame->objectPosition);
 
-						if (Controller::MODE_STATISTICS)
+						if (MODE_STATISTICS)
 						{
-							Controller::statistics("TrackerInitialize(ms)", (double) timer->getMillis());
+							statistics("TrackerInitialize(ms)", static_cast<double>(timer->getMillis()));
 						}
 
 						// can track object
@@ -372,7 +368,7 @@ int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string
 					else
 					{
 						// drawing red contours
-						Drawer::drawContourWithRescale(mRgbaFrame, sceneFrame->objectPosition, cv::Scalar(0, 0, 255));
+						Drawer::drawContourWithRescale(mRgbaFrame, sceneFrame->objectPosition, Scalar(0, 0, 255));
 
 						// could not track object
 						STATE_TRACKING_OBJECT = false;
@@ -384,18 +380,18 @@ int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string
 			if (STATE_TRACKING_OBJECT)
 			{
 				// resize gray image
-				cv::Mat trackerFrame = sceneFrame->gray;
+				Mat trackerFrame = sceneFrame->gray;
 				try
 				{
-					cv::resize(mGrayFrame, trackerFrame, trackerFrame.size());
+					resize(mGrayFrame, trackerFrame, trackerFrame.size());
 				}
-				catch (cv::Exception& exception)
+				catch (Exception& exception)
 				{
 					cvError(0, "TrackerFrame", "Resizing failed!", __FILE__, __LINE__);
 					cout << exception.what() << endl;
 				}
 
-				if (Controller::MODE_STATISTICS)
+				if (MODE_STATISTICS)
 				{
 					timer->restart();
 				}
@@ -403,25 +399,25 @@ int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string
 				// processing
 				STATE_TRACKING_OBJECT = tracker->process(trackerFrame);
 
-				if (Controller::MODE_STATISTICS)
+				if (MODE_STATISTICS)
 				{
-					Controller::statistics("TrackingProcess(ms)", (double) timer->getMillis());
+					statistics("TrackingProcess(ms)", static_cast<double>(timer->getMillis()));
 				}
 
 				// draw blue contours
-				Drawer::drawContourWithRescale(mRgbaFrame, tracker->objectPosition, cv::Scalar(255, 0, 0));
+				Drawer::drawContourWithRescale(mRgbaFrame, tracker->objectPosition, Scalar(255, 0, 0));
 			}
 		}
 
-		if (Controller::MODE_STATISTICS)
+		if (MODE_STATISTICS)
 		{
-			Controller::statistics("DisplayFunction(ms)", (double) clock->getMillis());
-			Controller::stats->write(STATISTICS_FILE);
+			statistics("DisplayFunction(ms)", static_cast<double>(clock->getMillis()));
+			stats->write(STATISTICS_FILE);
 		}
 	}
 
 	// add text to window(s)
-	if (Controller::MODE_USE_WINDOWS || Controller::MODE_SAVE_RESULT_FRAMES)
+	if (MODE_USE_WINDOWS || MODE_SAVE_RESULT_FRAMES)
 	{
 		// create text
 		char text[255];
@@ -438,15 +434,15 @@ int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string
 		        Analyzer::MATCHER.c_str(), gotObject.c_str());
 
 		// draw text background (white)
-		cv::rectangle(mRgbaFrame, cv::Point(0, 0), cv::Point(305, 25), CV_RGB(255, 255, 255), -1);
+		rectangle(mRgbaFrame, Point(0, 0), Point(305, 25), CV_RGB(255, 255, 255), -1);
 
 		// draw text
-		cv::putText(mRgbaFrame, text, cv::Point(10, 15), CV_FONT_HERSHEY_PLAIN,
-		            1,
-		            CV_RGB(255, 0, 0));
+		putText(mRgbaFrame, text, Point(10, 15), CV_FONT_HERSHEY_PLAIN,
+		        1,
+		        CV_RGB(255, 0, 0));
 
 		// display image?
-		if (Controller::MODE_USE_WINDOWS)
+		if (MODE_USE_WINDOWS)
 		{
 			string window_name = Analyzer::DETECTOR + "-" + Analyzer::EXTRACTOR + "-" + Analyzer::MATCHER;
 			namedWindow(window_name, 0); //resizable window;
@@ -455,9 +451,9 @@ int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string
 		}
 
 		// save image?
-		if (Controller::MODE_SAVE_RESULT_FRAMES)
+		if (MODE_SAVE_RESULT_FRAMES)
 		{
-			string imagepath = Controller::STORAGE_PATH + "\\test-results\\" + imageName + "-" + Analyzer::DETECTOR
+			string imagepath = STORAGE_PATH + "\\test-results\\" + imageName + "-" + Analyzer::DETECTOR
 				+ "-" + Analyzer::EXTRACTOR + "-" + Analyzer::MATCHER + ".jpg";
 			cout << "Write result-image to: " + imagepath << endl;
 			imwrite(imagepath, mRgbaFrame);
@@ -473,22 +469,10 @@ int Controller::displayFunction(cv::Mat& mRgbaFrame, cv::Mat& mGrayFrame, string
 	return returnThis;
 }
 
-void Controller::glRender()
-{
-	//    log(ControllerTAG, "rendering..");
-	//    log(ControllerTAG, "rendering.. done");
-}
-
-void Controller::glResize(int height, int width)
-{
-	//    log(ControllerTAG, "resizing..");
-	//    log(ControllerTAG, "resizing.. done");
-}
-
-int Controller::setDetector(string type)
+int Controller::setDetector(string type) const
 {
 	int returnThis = 0;
-	bool result = Controller::configure(type, Analyzer::EXTRACTOR, Analyzer::MATCHER);
+	bool result = configure(type, Analyzer::EXTRACTOR, Analyzer::MATCHER);
 	if (result)
 	{
 		returnThis = 1;
@@ -496,10 +480,10 @@ int Controller::setDetector(string type)
 	return returnThis;
 }
 
-int Controller::setExtractor(string type)
+int Controller::setExtractor(string type) const
 {
 	int returnThis = 0;
-	bool result = Controller::configure(Analyzer::DETECTOR, type, Analyzer::MATCHER);
+	bool result = configure(Analyzer::DETECTOR, type, Analyzer::MATCHER);
 	if (result)
 	{
 		returnThis = 1;
@@ -507,10 +491,10 @@ int Controller::setExtractor(string type)
 	return returnThis;;
 }
 
-int Controller::setMatcher(string type)
+int Controller::setMatcher(string type) const
 {
 	int returnThis = 0;
-	bool result = Controller::configure(Analyzer::DETECTOR, Analyzer::EXTRACTOR, type);
+	bool result = configure(Analyzer::DETECTOR, Analyzer::EXTRACTOR, type);
 	if (result)
 	{
 		returnThis = 1;
@@ -548,13 +532,13 @@ void Controller::isModeStatistics(bool isActive)
 	MODE_STATISTICS = isActive;
 }
 
-bool Controller::createObjectPattern(cv::Mat& rgb, cv::Mat& gray)
+bool Controller::createObjectPattern(Mat& rgb, Mat& gray)
 {
 	// register object pattern to analyzer
 	return analyzer->createObjectPattern(gray);
 }
 
-bool Controller::configure(string detector, string extractor, string matcher)
+bool Controller::configure(string detector, string extractor, string matcher) const
 {
 	// disable analyzer
 	analyzer->isInitialized = false;
@@ -583,7 +567,7 @@ int Controller::test(vector<string> images, int test, int quantifier)
 
 	// prepare object image
 	cout << "Loading Object " << STORAGE_PATH + images.at(0) << endl;
-	objectRgbImage = cv::imread(STORAGE_PATH + images.at(0));
+	objectRgbImage = imread(STORAGE_PATH + images.at(0));
 	if (objectRgbImage.empty())
 	{
 		cout << "Object image cannot be read" << endl;
@@ -593,7 +577,7 @@ int Controller::test(vector<string> images, int test, int quantifier)
 
 	// prepare first scene image
 	cout << "Loading Scene " << STORAGE_PATH + images.at(1) << endl;
-	sceneRgbImageData = cv::imread(STORAGE_PATH + images.at(1));
+	sceneRgbImageData = imread(STORAGE_PATH + images.at(1));
 	if (sceneRgbImageData.empty())
 	{
 		cout << "Scene image cannot be read" << endl;
@@ -604,7 +588,7 @@ int Controller::test(vector<string> images, int test, int quantifier)
 	// initialize
 	if (!isInitialized)
 	{
-		initialize(sceneRgbImageData, STORAGE_PATH);
+		initialize(sceneRgbImageData, STORAGE_PATH, "\\config\\config.xml");
 	}
 
 	// set testing mode and save actual configuration
@@ -615,7 +599,7 @@ int Controller::test(vector<string> images, int test, int quantifier)
 	MODE_TRACKING = false;
 	MODE_STATISTICS = true;
 
-	if (Controller::MODE_DEBUG)
+	if (MODE_DEBUG)
 	{
 		cout << "-----------------------------------------------------" << endl;
 		cout << "-----------------------------------------------------" << endl;
@@ -1483,7 +1467,7 @@ int Controller::test(vector<string> images, int test, int quantifier)
 		{
 			// load (actual) scene image
 			cout << "Loading Scene " << STORAGE_PATH + images.at(i) << endl;
-			sceneRgbImageData = cv::imread(STORAGE_PATH + images.at(i));
+			sceneRgbImageData = imread(STORAGE_PATH + images.at(i));
 			if (sceneRgbImageData.empty())
 			{
 				cout << "Scene image " << i << "/" << imageCount << " cannot be read" << endl;
@@ -1505,7 +1489,7 @@ int Controller::test(vector<string> images, int test, int quantifier)
 
 				// do test
 				string imageName = images.at(i);
-				std::size_t found = imageName.find_last_of("/\\");
+				size_t found = imageName.find_last_of("/\\");
 				string fileName = imageName.substr(found + 1);
 				int result = displayFunction(sceneRgbImage, sceneGrayImage, fileName);
 

@@ -8,22 +8,25 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
+using namespace cv;
+
 namespace om {
+
 
     class ObjectPattern {
 
     public:
 
-        ObjectPattern(const cv::Mat &grayImage);
+	    explicit ObjectPattern(const Mat &grayImage);
 
-        cv::Size size;
-        cv::Mat image;
+        Size size;
+        Mat image;
 
-        std::vector<cv::KeyPoint> keypoints;
-        cv::Mat descriptors;
+        vector<KeyPoint> keypoints;
+        Mat descriptors;
 
-        std::vector<cv::Point2f> points2d;
-        std::vector<cv::Point3f> points3d;
+        vector<Point2f> points2d;
+        vector<Point3f> points3d;
 
         virtual ~ObjectPattern(void);
 
@@ -31,6 +34,6 @@ namespace om {
 
     };
 
-};
+}
 
 #endif

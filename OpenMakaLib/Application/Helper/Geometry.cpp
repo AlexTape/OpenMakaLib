@@ -12,19 +12,19 @@
 using namespace std;
 using namespace om;
 
-Geometry::Geometry(void) {
+Geometry::Geometry() {
     if (Controller::MODE_DEBUG) {
         cout << "Creating Geometry instance.." << endl;
     }
 }
 
-Geometry::~Geometry(void) {
+Geometry::~Geometry() {
     if (Controller::MODE_DEBUG) {
 	    cout << "Deleting Geometry instance.." << endl;
     }
 }
 
-bool Geometry::isRectangle(vector<cv::Point2f> &rectanglePoints) {
+bool Geometry::isRectangle(vector<Point2f> &rectanglePoints) {
 
     // check the validity of transformed rectangle shape
     // the sign of outer products of each edge vector must be the same
@@ -67,16 +67,16 @@ bool Geometry::isRectangle(vector<cv::Point2f> &rectanglePoints) {
     return returnThis;
 }
 
-vector<cv::Point2f> Geometry::rescale(vector<cv::Point2f>& points2d)
+vector<Point2f> Geometry::rescale(vector<Point2f>& points2d)
 {
 	// create bucket
-	vector<cv::Point2f> coords = vector<cv::Point2f>(points2d.size());
+	vector<Point2f> coords = vector<Point2f>(points2d.size());
 
 	// for all points
 	for (size_t i = 0; i < points2d.size(); i++)
 	{
         // rescale point a coordinates
-        cv::Point2f a;
+        Point2f a;
         a.x = static_cast<int>(points2d[i].x * SceneFrame::IMAGE_SCALE + 0.5);
         a.y = static_cast<int>(points2d[i].y * SceneFrame::IMAGE_SCALE + 0.5);
 
@@ -87,7 +87,7 @@ vector<cv::Point2f> Geometry::rescale(vector<cv::Point2f>& points2d)
 	return coords;
 }
 
-CvRect Geometry::fitRectangle(vector<cv::Point2f> rect, RECTANGLE_MODE mode)
+CvRect Geometry::fitRectangle(vector<Point2f> rect, RECTANGLE_MODE mode)
 {
 	// Rect as big as possible
 	if (mode == MAX) 
@@ -164,15 +164,15 @@ CvRect Geometry::fitRectangle(vector<cv::Point2f> rect, RECTANGLE_MODE mode)
 	return cvRect(rect[0].x, rect[0].y, rect[3].x - rect[0].x, rect[1].y - rect[0].y);
 }
 
-cv::Mat Geometry::cutRoi(cv::Mat& image, CvRect rect)
+Mat Geometry::cutRoi(Mat& image, CvRect rect)
 {
-	cv::Mat cuttedImage = image.clone();
-	return cuttedImage(rect) = cv::Scalar(255, 255, 255);
+	Mat cuttedImage = image.clone();
+	return cuttedImage(rect) = Scalar(255, 255, 255);
 }
 
-cv::Mat Geometry::getRoi(cv::Mat& image, CvRect rect)
+Mat Geometry::getRoi(Mat& image, CvRect rect)
 {
-	cv::Mat cuttedImage = image.clone();
+	Mat cuttedImage = image.clone();
 	return cuttedImage(rect);
 }
 

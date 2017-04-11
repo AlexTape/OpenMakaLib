@@ -13,35 +13,36 @@
 
 using namespace std;
 using namespace om;
+using namespace cv;
 
 // init static members
-Tracker *Tracker::inst_ = NULL;
+Tracker *Tracker::inst_ = nullptr;
 int Tracker::MAX_CORNERS;
 double Tracker::QUALITY_LEVEL;
 double Tracker::MINIMUM_DISTANCE;
 
 Tracker *Tracker::getInstance() {
-    if (inst_ == NULL) {
+    if (inst_ == nullptr) {
         inst_ = new Tracker();
     }
     return inst_;
 }
 
-Tracker::Tracker(void) {
+Tracker::Tracker() {
     if (Controller::MODE_DEBUG) {
         cout << "Creating Tracker instance.." << endl;
     }
 }
 
-Tracker::~Tracker(void) {
+Tracker::~Tracker() {
     if (Controller::MODE_DEBUG) {
         cout << "Deleting Tracker instance.." << endl;
     }
 }
 
-void Tracker::initialize(const cv::Mat &frame, vector<cv::Point2f> &actualObjectPosition) {
+void Tracker::initialize(const Mat &frame, vector<Point2f> &actualObjectPosition) {
 
-    cv::Mat mask = createAreaMask(frame.size(), actualObjectPosition);
+    Mat mask = createAreaMask(frame.size(), actualObjectPosition);
 
     goodFeaturesToTrack(frame, corners, MAX_CORNERS, QUALITY_LEVEL,
                         MINIMUM_DISTANCE, mask);
@@ -51,18 +52,18 @@ void Tracker::initialize(const cv::Mat &frame, vector<cv::Point2f> &actualObject
 
     float d[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
-    homography = cv::Mat(3, 3, CV_32FC1, d).clone();
+    homography = Mat(3, 3, CV_32FC1, d).clone();
     vstatus.clear();
 }
 
-bool Tracker::process(const cv::Mat &sceneImage) {
+bool Tracker::process(const Mat &sceneImage) {
 
-    std::vector<cv::Point2f> nextCorners;
-    std::vector<float> verror;
+    vector<Point2f> nextCorners;
+    vector<float> verror;
 
     if (corners.size() == 0) {
         if (Controller::MODE_STATISTICS) {
-            Controller::statistics("TrackerCorners", (int) corners.size());
+            Controller::statistics("TrackerCorners", static_cast<int>(corners.size()));
         }
         if (Controller::MODE_DEBUG) {
             cout << "TrackerCorners=" << corners.size() << endl;
@@ -72,7 +73,7 @@ bool Tracker::process(const cv::Mat &sceneImage) {
 
     // vstatus gives the total number of found features
     // verror will contian known errors
-    cv::calcOpticalFlowPyrLK(lastImage, sceneImage, corners, nextCorners, vstatus,
+    calcOpticalFlowPyrLK(lastImage, sceneImage, corners, nextCorners, vstatus,
                              verror);
 
 
@@ -80,10 +81,10 @@ bool Tracker::process(const cv::Mat &sceneImage) {
     vector<unsigned char>::iterator status_itr = vstatus.begin();
     while (status_itr != vstatus.end()) {
         if (*status_itr > 0) validFeatures++;
-        status_itr++;
+	    ++status_itr;
     }
 
-//    vector<cv::Point2f> rightPoints;
+//    vector<Point2f> rightPoints;
 //    vector<int> rightPointsToFindBackIndex;
 //
 //    for (unsigned int i = 0; i<vstatus.size(); i++) {
@@ -109,7 +110,7 @@ bool Tracker::process(const cv::Mat &sceneImage) {
 
     } else {
 
-        homography = findHomography(cv::Mat(corners), cv::Mat(nextCorners),
+        homography = findHomography(Mat(corners), Mat(nextCorners),
                                     vstatus, CV_RANSAC, 5);
 
         if (countNonZero(homography) == 0) {
@@ -118,7 +119,7 @@ bool Tracker::process(const cv::Mat &sceneImage) {
 
         } else {
 
-            vector<cv::Point2f> nextObjectPosition = calcAffineTransformation(
+            vector<Point2f> nextObjectPosition = calcAffineTransformation(
                     objectPosition, homography);
 
             if (!isObjectInsideImage(lastImage.size(), nextObjectPosition)) {
@@ -145,7 +146,7 @@ bool Tracker::process(const cv::Mat &sceneImage) {
     return true;
 }
 
-int Tracker::isInsideArea(vector<cv::Point2f> &points, vector<cv::Point2f> &cornerPoints,
+int Tracker::isInsideArea(vector<Point2f> &points, vector<Point2f> &cornerPoints,
                           vector<unsigned char> &status) {
 
     CV_Assert(cornerPoints.size() == 4);
@@ -208,7 +209,7 @@ int Tracker::isInsideArea(vector<cv::Point2f> &points, vector<cv::Point2f> &corn
     return count;
 }
 
-bool Tracker::isRectangle(vector<cv::Point2f> &rectanglePoints) {
+bool Tracker::isRectangle(vector<Point2f> &rectanglePoints) {
 
     // check the validity of transformed rectangle shape
     // the sign of outer products of each edge vector must be the same
@@ -251,10 +252,10 @@ bool Tracker::isRectangle(vector<cv::Point2f> &rectanglePoints) {
     return returnThis;
 }
 
-bool Tracker::isObjectInsideImage(cv::Size imageSize, vector<cv::Point2f> &points) {
+bool Tracker::isObjectInsideImage(Size imageSize, vector<Point2f> &points) {
 
     // test is all points are inside the image area
-    vector<cv::Point2f>::iterator itr = points.begin();
+    vector<Point2f>::iterator itr = points.begin();
     while (itr != points.end()) {
         if (itr->x < 0 || itr->x >= imageSize.width || itr->y < 0
             || itr->y >= imageSize.height) {
@@ -266,11 +267,11 @@ bool Tracker::isObjectInsideImage(cv::Size imageSize, vector<cv::Point2f> &point
     return true;
 }
 
-cv::Mat Tracker::getLastDirection(vector<cv::Point2f> &pointVector) {
+Mat Tracker::getLastDirection(vector<Point2f> &pointVector) {
 
     // Convert Point2f structure vector to Mat type in the homogeneous coordinates
     int size = pointVector.size();
-    cv::Mat objectDirection(3, size, CV_64FC1);
+    Mat objectDirection(3, size, CV_64FC1);
 
     for (int i = 0; i < size; i++) {
         objectDirection.at<double>(0, i) = (double) (pointVector[i].x);
@@ -281,18 +282,18 @@ cv::Mat Tracker::getLastDirection(vector<cv::Point2f> &pointVector) {
     return objectDirection;
 }
 
-vector<cv::Point2f> Tracker::calcAffineTransformation(vector<cv::Point2f> &pointVector,
-                                                      cv::Mat &transformation) {
-    vector<cv::Point2f> objectPosition;
+vector<Point2f> Tracker::calcAffineTransformation(vector<Point2f> &pointVector,
+                                                      Mat &transformation) {
+    vector<Point2f> objectPosition;
 
     if (pointVector.empty()) {
         return objectPosition;
     }
 
-    cv::Mat lastDirection = getLastDirection(pointVector);
-    cv::Mat newDirection = transformation * lastDirection;
+    Mat lastDirection = getLastDirection(pointVector);
+    Mat newDirection = transformation * lastDirection;
 
-    cv::Point2f points;
+    Point2f points;
     int cols = newDirection.cols;
     for (int i = 0; i < cols; i++) {
         points.x = (float) (newDirection.at<double>(0, i)
@@ -305,10 +306,10 @@ vector<cv::Point2f> Tracker::calcAffineTransformation(vector<cv::Point2f> &point
     return objectPosition;
 }
 
-cv::Mat Tracker::createAreaMask(cv::Size imageSize, vector<cv::Point2f> &points) {
+Mat Tracker::createAreaMask(Size imageSize, vector<Point2f> &points) {
 
     // create feature areaMask
-    cv::Mat areaMask;
+    Mat areaMask;
 
     int zero = 0;
     areaMask = zero;

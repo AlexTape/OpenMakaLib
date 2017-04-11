@@ -2,16 +2,21 @@
 #ifndef OPENMAKAENGINE_SCENEFRAME_CPP
 #define OPENMAKAENGINE_SCENEFRAME_CPP
 
+#include <iostream>
+
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include "SceneFrame.h"
 #include "../Controller.h"
 
 using namespace std;
 using namespace om;
+using namespace cv;
 
 int SceneFrame::MAX_IMAGE_SIZE;
 float SceneFrame::IMAGE_SCALE;
 
-SceneFrame::SceneFrame(cv::Mat &rgbInputFrame, cv::Mat &grayInputFrame) {
+SceneFrame::SceneFrame(Mat &rgbInputFrame, Mat &grayInputFrame) {
 
     if (Controller::MODE_DEBUG) {
         cout << "Creating SceneFrame instance.." << endl;
@@ -19,10 +24,10 @@ SceneFrame::SceneFrame(cv::Mat &rgbInputFrame, cv::Mat &grayInputFrame) {
 
     rgb = rgbInputFrame;
     gray = grayInputFrame;
-    objectPosition = vector<cv::Point2f>(4);
+    objectPosition = vector<Point2f>(4);
 
     // get initial size of gray mat
-    cv::Size graySize = gray.size();
+    Size graySize = gray.size();
 
     // get largest image side
     int maxSize;
@@ -36,7 +41,7 @@ SceneFrame::SceneFrame(cv::Mat &rgbInputFrame, cv::Mat &grayInputFrame) {
     IMAGE_SCALE = 0.1;
 
     // calc scale factor via max image size
-    while ((maxSize / IMAGE_SCALE) >= MAX_IMAGE_SIZE) {
+    while (maxSize / IMAGE_SCALE >= MAX_IMAGE_SIZE) {
         IMAGE_SCALE = IMAGE_SCALE + static_cast<float>(0.1);
     }
 
@@ -45,17 +50,17 @@ SceneFrame::SceneFrame(cv::Mat &rgbInputFrame, cv::Mat &grayInputFrame) {
     float calcHeight = graySize.height / IMAGE_SCALE;
 
     // round to concrete width/height
-    int height = (int) (calcHeight + 0.5);
-    int width = (int) (calcWidth + 0.5);
+    int height = static_cast<int>(calcHeight + 0.5);
+    int width = static_cast<int>(calcWidth + 0.5);
 
     // create image holder
-    cv::Mat holder;
+    Mat holder;
     holder.create(height, width, CV_8UC1);
 
     // resize gray image
     try {
-        cv::resize(gray, holder, holder.size());
-    } catch (cv::Exception &exception) {
+        resize(gray, holder, holder.size());
+    } catch (Exception &exception) {
         cvError(0, "SceneFrame", "Resizing failed!", __FILE__, __LINE__);
         cout << exception.what() << endl;
     }
@@ -63,19 +68,21 @@ SceneFrame::SceneFrame(cv::Mat &rgbInputFrame, cv::Mat &grayInputFrame) {
 
 }
 
-string SceneFrame::getInputResolution() {
+string SceneFrame::getInputResolution() const
+{
     ostringstream ss;
     ss << rgb.cols << "x" << rgb.rows;
     return ss.str();
 }
 
-string SceneFrame::getProcessingResolution() {
+string SceneFrame::getProcessingResolution() const
+{
     ostringstream ss;
     ss << gray.cols << "x" << gray.rows;
     return ss.str();
 }
 
-SceneFrame::~SceneFrame(void) {
+SceneFrame::~SceneFrame() {
     if (Controller::MODE_DEBUG) {
         cout << "Deleting SceneFrame instance.." << endl;
     }

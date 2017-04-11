@@ -15,31 +15,11 @@ namespace om {
 
     class Analyzer {
 
-    private:
-
-        static Analyzer *inst_;
-
-        Analyzer(void);
-
-        cv::Ptr<cv::FeatureDetector> detector;
-
-        cv::Ptr<cv::DescriptorExtractor> extractor;
-
-        cv::Ptr<cv::DescriptorMatcher> matcher;
-
-        int distance;
-
-        ObjectPattern *activeObjectPattern;
-
-        om::Timer *clock;
-
-        om::Timer *timer;
-
     public:
 
-        static std::string DETECTOR;
-        static std::string EXTRACTOR;
-        static std::string MATCHER;
+        static string DETECTOR;
+        static string EXTRACTOR;
+        static string MATCHER;
         static int MINIMUM_INLIERS;
         static int MINIMUM_MATCHES;
         static float NN_DISTANCE_RATIO;
@@ -48,7 +28,7 @@ namespace om {
         bool IS_BRUTEFORCE_MATCHER;
         static int K_GROUPS;
 
-        virtual ~Analyzer(void);
+        virtual ~Analyzer();
 
         bool isInitialized;
 
@@ -56,42 +36,63 @@ namespace om {
 
         bool releaseOpenCV();
 
-        void initExtractor(std::string &type);
+        void initExtractor(string &type);
 
-        void initDetector(std::string &type);
+        void initDetector(string &type);
 
-        void initMatcher(std::string &type);
+        void initMatcher(string &type);
 
         bool initialize();
 
-        bool analyze(cv::Mat &gray, std::vector<cv::KeyPoint> &keypoints, cv::Mat &descriptors);
+        bool analyze(Mat &gray, vector<KeyPoint> &keypoints, Mat &descriptors);
 
 
         bool process(SceneFrame &sceneFrame);
 
-        bool createObjectPattern(cv::Mat &image);
+        bool createObjectPattern(Mat &image);
 
         bool analyzeSceneFrame(SceneFrame &sceneFrame);
 
-        void matchBinaryDescriptors(SceneFrame &sceneFrame, std::vector<cv::Point2f> &goodTrainKeypoints,
-                                    std::vector<cv::Point2f> &goodSceneKeypoints);
+        void matchBinaryDescriptors(SceneFrame &sceneFrame, vector<Point2f> &goodTrainKeypoints,
+                                    vector<Point2f> &goodSceneKeypoints);
 
-        void matchFloatDescriptors(SceneFrame &sceneFrame, std::vector<cv::Point2f> &goodTrainKeypoints,
-                                   std::vector<cv::Point2f> &goodSceneKeypoints);
+        void matchFloatDescriptors(SceneFrame &sceneFrame, vector<Point2f> &goodTrainKeypoints,
+                                   vector<Point2f> &goodSceneKeypoints);
 
-        bool refineMatches(SceneFrame &query, ObjectPattern &pattern);
+        bool refineMatches(SceneFrame &query, ObjectPattern &pattern) const;
 
-        void train(const cv::Mat &descriptors);
+        void train(const Mat &descriptors);
 
         void match(SceneFrame &sceneFrame);
 
-        int calcInliers(SceneFrame &sceneFrame, std::vector<cv::Point2f> &goodTrainKeypoints,
-                        std::vector<cv::Point2f> &goodSceneKeypoints);
+        int calcInliers(SceneFrame &sceneFrame, vector<Point2f> &goodTrainKeypoints,
+                        vector<Point2f> &goodSceneKeypoints) const;
 
         bool missingObjectPattern();
+		
+    private:
+
+        static Analyzer *inst_;
+
+        Analyzer();
+
+        Ptr<FeatureDetector> detector;
+
+        Ptr<DescriptorExtractor> extractor;
+
+        Ptr<DescriptorMatcher> matcher;
+
+        int distance;
+
+        ObjectPattern *activeObjectPattern;
+
+        Timer *clock;
+
+        Timer *timer;
+
 
     };
 
-};
+}
 
 #endif

@@ -3,17 +3,22 @@
 
 class Geometry
 {
-private:
-	Geometry(void);
-	virtual ~Geometry(void);
 public:
 
-	enum RECTANGLE_MODE {MAX, MIN, FIT};
+	enum RECTANGLE_MODE
+	{
+		MAX,
+		MIN,
+		FIT
+	};
 
-	static bool isRectangle(std::vector<cv::Point2f>& rectanglePoints);
-	static std::vector<cv::Point_<float>> rescale(std::vector<cv::Point_<float>>& points2d);
-	static CvRect fitRectangle(std::vector<cv::Point_<float>> rectangle, RECTANGLE_MODE mode = MAX);
-	static cv::Mat cutRoi(cv::Mat& image, CvRect rect);
-	static cv::Mat getRoi(cv::Mat& image, CvRect rect);
+	static bool isRectangle(vector<Point2f>& rectanglePoints);
+	static vector<Point_<float>> rescale(vector<Point_<float>>& points2d);
+	static CvRect fitRectangle(vector<Point_<float>> rectangle, RECTANGLE_MODE mode = MAX);
+	static Mat cutRoi(Mat& image, CvRect rect);
+	static Mat getRoi(Mat& image, CvRect rect);
+
+private:
+	Geometry();
+	virtual ~Geometry();
 };
-
