@@ -1,4 +1,5 @@
 #pragma once
+
 #ifndef OPENMAKAENGINE_TRACKER_CPP
 #define OPENMAKAENGINE_TRACKER_CPP
 
@@ -7,6 +8,8 @@
 //! forked @https://github.com/AlexTape/OpenCV-Marker-less-AR
 
 #include "Tracker.h"
+
+#include <iostream>
 #include "../Controller.h"
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/video/tracking.hpp>
